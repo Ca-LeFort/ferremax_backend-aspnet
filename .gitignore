@@ -1,0 +1,37 @@
+# Build
+bin/
+obj/
+
+# Runtime
+*.db
+*.db-journal
+
+# Visual Studio
+.vscode/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# Secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# Environment
+.env
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Publish outputs
+publish/
+out/
+
+# Others
+*.swp
