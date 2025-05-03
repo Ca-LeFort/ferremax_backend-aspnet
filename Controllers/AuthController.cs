@@ -32,7 +32,10 @@ public class AuthController : ControllerBase
         if (dominio == "ferremas.cl")
         {
             var empleado = await _context.Empleados.FirstOrDefaultAsync(e => e.Email == dto.Email);
+            
+            #pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
             var empleadoBase = new BaseUser { Email = empleado.Email };
+            #pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
 
             var resultado = _passwordHasher.VerifyHashedPassword(empleadoBase, empleado.Password, dto.Password);
 
@@ -50,7 +53,10 @@ public class AuthController : ControllerBase
         else
         {
             var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.Email == dto.Email);
+
+            #pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
             var clienteBase = new BaseUser { Email = cliente.Email };
+            #pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
 
             var resultado = _passwordHasher.VerifyHashedPassword(clienteBase, cliente.Password, dto.Password);
 
@@ -76,9 +82,11 @@ public class AuthController : ControllerBase
 
     private string AddTokenJWT(string Email, string Rol)
     {
+        #pragma warning disable CS8604 // Posible argumento de referencia nulo
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_config["Jwt:Key"])
         );
+        #pragma warning restore CS8604 // Posible argumento de referencia nulo
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

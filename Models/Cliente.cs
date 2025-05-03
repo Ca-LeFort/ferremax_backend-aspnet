@@ -8,23 +8,14 @@ public partial class Cliente
 {
     [Key]
     public string RutCliente { get; set; } = null!;
-
     public string PNombre { get; set; } = null!;
-
     public string? SNombre { get; set; }
-
     public string PApellido { get; set; } = null!;
-
     public string SApellido { get; set; } = null!;
-
     public string Email { get; set; } = null!;
-
     public string Password { get; set; } = null!;
-
     public int Telefono { get; set; }
-
     public string Direccion { get; set; } = null!;
-
     public DateOnly FechaNacimiento { get; set; }
 
     public int? IdGenero { get; set; }

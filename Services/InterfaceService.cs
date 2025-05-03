@@ -1,6 +1,6 @@
 using ApiPrincipal_Ferremas.Models;
 
-public interface IClienteService 
+public interface InterfaceService 
 {
     ResultadoOperacionService CrearCliente(Cliente cliente);
 }

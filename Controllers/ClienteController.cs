@@ -2,7 +2,6 @@ using ApiPrincipal_Ferremas.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 [Route("api/clientes")]
 [ApiController]
@@ -10,9 +9,13 @@ public class ClienteController : ControllerBase
 {
     private readonly IPasswordHasher<BaseUser> _passwordHasher;
     private readonly SistemaFerremasContext _context;
+    private readonly ClienteService _clienteService;
 
-    public ClienteController(IPasswordHasher<BaseUser> passwordHasher, SistemaFerremasContext context)
+    public ClienteController(ClienteService clienteService,
+                            IPasswordHasher<BaseUser> passwordHasher,
+                            SistemaFerremasContext context)
     {
+        _clienteService = clienteService;
         _passwordHasher = passwordHasher;
         _context = context;
     }
@@ -27,7 +30,7 @@ public class ClienteController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new 
+            return StatusCode(500, new
             {
                 mensaje = "Error interno, vuelve a intentar más tarde",
                 detalle = ex.Message
@@ -42,7 +45,8 @@ public class ClienteController : ControllerBase
         var cliente = await _context.Clientes.FindAsync(rut);
         if (cliente == null)
         {
-            return NotFound(new {
+            return NotFound(new
+            {
                 mensaje = "No se ha encontrado el cliente"
             });
         }
@@ -58,12 +62,21 @@ public class ClienteController : ControllerBase
             var cli = await _context.Clientes.FindAsync(cliente.RutCliente);
             if (cli != null)
             {
-                return BadRequest(new {
+                return BadRequest(new
+                {
                     mensaje = "Ya existe cliente con ese RUT"
                 });
             }
+            var validaCliente = _clienteService.CrearCliente(cliente);
+            if (!validaCliente.Exito)
+            {
+                return BadRequest(new
+                {
+                    mensaje = validaCliente.Mensaje
+                });
+            }
 
-            var clienteBase = new BaseUser { Email = cliente.Email};
+            var clienteBase = new BaseUser { Email = cliente.Email };
             cliente.Password = _passwordHasher.HashPassword(clienteBase, cliente.Password);
 
             _context.Clientes.Add(cliente);
@@ -75,7 +88,7 @@ public class ClienteController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new 
+            return StatusCode(500, new
             {
                 mensaje = "Error interno, vuelve a intentar más tarde",
                 detalle = ex.Message
@@ -91,22 +104,23 @@ public class ClienteController : ControllerBase
         {
             if (rut != cliente.RutCliente)
             {
-                return NotFound(new {
+                return NotFound(new
+                {
                     mensaje = "No se ha encontrado el cliente"
                 });
             }
-            var clienteBase = new BaseUser { Email = cliente.Email};
+            var clienteBase = new BaseUser { Email = cliente.Email };
             cliente.Password = _passwordHasher.HashPassword(clienteBase, cliente.Password);
             _context.Entry(cliente).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return Ok(new 
+            return Ok(new
             {
                 mensaje = "Se ha actualizado el cliente con éxito!"
             });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new 
+            return StatusCode(500, new
             {
                 mensaje = "Error interno, vuelve a intentar más tarde",
                 detalle = ex.Message
@@ -123,19 +137,72 @@ public class ClienteController : ControllerBase
             var cliente = await _context.Clientes.FindAsync(rut);
             if (cliente == null)
             {
-                return NotFound(new {
+                return NotFound(new
+                {
                     mensaje = "No se ha encontrado el cliente"
                 });
             }
             _context.Clientes.Remove(cliente);
             await _context.SaveChangesAsync();
-            return Ok(new {
+            return Ok(new
+            {
                 mensaje = "Se ha eliminado el cliente!"
             });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new 
+            return StatusCode(500, new
+            {
+                mensaje = "Error interno, vuelve a intentar más tarde",
+                detalle = ex.Message
+            });
+        }
+    }
+
+    // PATCH: api/clientes/{rut}
+    [HttpPatch("{rut}")]
+    public async Task<IActionResult> ModificarClientePatch(string rut, [FromBody] ClienteDTO patchCliente)
+    {
+        try
+        {
+            var cliente = await _context.Clientes.FindAsync(rut);
+            if (cliente == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "No se ha encontrado el cliente"
+                });
+            }
+
+            // Actualización de datos existentes
+            if (patchCliente.PNombre != null) cliente.PNombre = patchCliente.PNombre;
+            if (patchCliente.SNombre != null) cliente.SNombre = patchCliente.SNombre;
+            if (patchCliente.PApellido != null) cliente.PApellido = patchCliente.PApellido;
+            if (patchCliente.SApellido != null) cliente.SApellido = patchCliente.SApellido;
+            if (patchCliente.Email != null) cliente.Email = patchCliente.Email;
+            if (patchCliente.Password != null) 
+            {
+                var clienteBase = new BaseUser { Email = patchCliente.Email };
+                patchCliente.Password = _passwordHasher.HashPassword(clienteBase, patchCliente.Password);
+                cliente.Password = patchCliente.Password;
+            }
+            if (patchCliente.Telefono != null) cliente.Telefono = (int)patchCliente.Telefono;
+            if (patchCliente.Direccion != null) cliente.Direccion = patchCliente.Direccion;
+            if (patchCliente.FechaNacimiento != null) cliente.FechaNacimiento = (DateOnly)patchCliente.FechaNacimiento;
+            if (patchCliente.IdGenero != null) cliente.IdGenero = patchCliente.IdGenero;
+            if (patchCliente.IdEstCivil != null) cliente.IdEstCivil = patchCliente.IdEstCivil;
+            if (patchCliente.IdComuna != null) cliente.IdComuna = patchCliente.IdComuna;
+            if (patchCliente.IdNotificacion != null) cliente.IdNotificacion = patchCliente.IdNotificacion;
+
+            await _context.SaveChangesAsync();
+            return Ok(new
+            {
+                mensaje = "Se ha actualizado parcialmente el Cliente"
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
             {
                 mensaje = "Error interno, vuelve a intentar más tarde",
                 detalle = ex.Message

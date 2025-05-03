@@ -16,7 +16,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IPasswordHasher<BaseUser>, PasswordHasher<BaseUser>>();
 
 // Configuarión de la autenticación con JWT
+#pragma warning disable CS8604 // Posible argumento de referencia nulo
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
+#pragma warning restore CS8604 // Posible argumento de referencia nulo
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
@@ -38,6 +41,7 @@ builder.Services.AddDbContext<SistemaFerremasContext>(opt =>
     opt.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<ClienteService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
