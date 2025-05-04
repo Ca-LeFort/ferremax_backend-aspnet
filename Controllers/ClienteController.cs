@@ -42,15 +42,26 @@ public class ClienteController : ControllerBase
     [HttpGet("{rut}")]
     public async Task<ActionResult<Cliente>> BuscarCliente(string rut)
     {
-        var cliente = await _context.Clientes.FindAsync(rut);
-        if (cliente == null)
+        try
         {
-            return NotFound(new
+            var cliente = await _context.Clientes.FindAsync(rut);
+            if (cliente == null)
             {
-                mensaje = "No se ha encontrado el cliente"
+                return NotFound(new
+                {
+                    mensaje = "No se ha encontrado el cliente"
+                });
+            }
+            return cliente;
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                mensaje = "Error interno, vuelve a intentar más tarde",
+                detalle = ex.Message
             });
         }
-        return cliente;
     }
 
     // POST: api/clientes
@@ -180,7 +191,7 @@ public class ClienteController : ControllerBase
             if (patchCliente.PApellido != null) cliente.PApellido = patchCliente.PApellido;
             if (patchCliente.SApellido != null) cliente.SApellido = patchCliente.SApellido;
             if (patchCliente.Email != null) cliente.Email = patchCliente.Email;
-            if (patchCliente.Password != null) 
+            if (patchCliente.Password != null)
             {
                 var clienteBase = new BaseUser { Email = patchCliente.Email };
                 patchCliente.Password = _passwordHasher.HashPassword(clienteBase, patchCliente.Password);

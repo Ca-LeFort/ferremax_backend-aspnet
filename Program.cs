@@ -42,6 +42,7 @@ builder.Services.AddDbContext<SistemaFerremasContext>(opt =>
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<EmpleadoService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
