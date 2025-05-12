@@ -66,7 +66,7 @@ public class ClienteController : ControllerBase
 
     // POST: api/clientes
     [HttpPost]
-    public async Task<ActionResult<Cliente>> AgregarCliente(Cliente cliente)
+    public async Task<ActionResult<Cliente>> AgregarCliente([FromBody] Cliente cliente)
     {
         try
         {

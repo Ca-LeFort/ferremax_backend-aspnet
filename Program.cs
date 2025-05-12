@@ -20,6 +20,16 @@ builder.Services.AddScoped<IPasswordHasher<BaseUser>, PasswordHasher<BaseUser>>(
 var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
 #pragma warning restore CS8604 // Posible argumento de referencia nulo
 
+// Configuración de CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularApp",
+       policy => policy.WithOrigins("https://localhost:4200")
+                       .AllowAnyHeader()
+                       .AllowAnyMethod());
+});
+
+// Configuración de JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
@@ -52,8 +62,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowAngularApp");
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

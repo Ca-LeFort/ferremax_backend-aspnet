@@ -54,21 +54,29 @@ public class AuthController : ControllerBase
         {
             var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.Email == dto.Email);
 
+            if (cliente == null)
+            {
+                return Unauthorized(new
+                {
+                    mensaje = "Correo y/o contraseña incorrectas"
+                });
+            }
+
             #pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
             var clienteBase = new BaseUser { Email = cliente.Email };
             #pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
 
             var resultado = _passwordHasher.VerifyHashedPassword(clienteBase, cliente.Password, dto.Password);
 
-            if (cliente == null || resultado != PasswordVerificationResult.Success)
+            if (resultado != PasswordVerificationResult.Success)
             {
-                return Unauthorized(new 
-                { 
-                    mensaje = "Correo y/o contraseña incorrectas" 
+                return Unauthorized(new
+                {
+                    mensaje = "Correo y/o contraseña incorrectas"
                 });
             }
 
-            LogEmail = cliente.Email;
+            LogEmail = cliente.PNombre;
             LogRol = "cliente";
         }
 
@@ -80,7 +88,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    private string AddTokenJWT(string Email, string Rol)
+    private string AddTokenJWT(string Nombre, string Rol)
     {
         #pragma warning disable CS8604 // Posible argumento de referencia nulo
         var key = new SymmetricSecurityKey(
@@ -92,7 +100,7 @@ public class AuthController : ControllerBase
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.Name, Email),
+            new Claim("nombre", Nombre),
             new Claim(ClaimTypes.Role, Rol)
         };
 
