@@ -26,9 +26,11 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDTO dto)
     {
         var dominio = dto.Email.Split('@').Last().ToLower();
+        string LogRut = "";
+        string LogNombre = "";
         string LogEmail = "";
         string LogRol = "";
-
+        
         if (dominio == "ferremas.cl")
         {
             var empleado = await _context.Empleados.FirstOrDefaultAsync(e => e.Email == dto.Email);
@@ -47,8 +49,28 @@ public class AuthController : ControllerBase
                 });
             }
 
+            LogRut = empleado.RutEmpleado;
+            LogNombre = empleado.PNombre;
             LogEmail = empleado.Email;
-            LogRol = "empleado";
+
+            // Asignación de tipos de empleado
+            if(empleado.IdTipoEmp == 1)
+            {
+                LogRol = "administrador";
+            } 
+            else if (empleado.IdTipoEmp == 2)
+            {
+                LogRol = "encargado";
+            }
+            else if (empleado.IdTipoEmp == 3)
+            {
+                LogRol = "bodeguero";
+            }
+            else if (empleado.IdTipoEmp == 4)
+            {
+                LogRol = "contador";
+            }
+            
         }
         else
         {
@@ -76,11 +98,13 @@ public class AuthController : ControllerBase
                 });
             }
 
-            LogEmail = cliente.PNombre;
+            LogRut = cliente.RutCliente;
+            LogNombre = cliente.PNombre;
+            LogEmail = cliente.Email;
             LogRol = "cliente";
         }
 
-        var token = AddTokenJWT(LogEmail, LogRol);
+        var token = AddTokenJWT(LogRut, LogNombre, LogEmail, LogRol);
 
         return Ok(new 
         {
@@ -88,7 +112,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    private string AddTokenJWT(string Nombre, string Rol)
+    private string AddTokenJWT(string Rut, string Nombre, string Email, string Rol)
     {
         #pragma warning disable CS8604 // Posible argumento de referencia nulo
         var key = new SymmetricSecurityKey(
@@ -100,7 +124,9 @@ public class AuthController : ControllerBase
 
         var claims = new[]
         {
+            new Claim("rut", Rut),
             new Claim("nombre", Nombre),
+            new Claim("email", Email),
             new Claim(ClaimTypes.Role, Rol)
         };
 
