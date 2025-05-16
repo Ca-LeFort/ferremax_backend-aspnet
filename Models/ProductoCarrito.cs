@@ -5,11 +5,9 @@ namespace ApiPrincipal_Ferremas.Models;
 
 public partial class ProductoCarrito
 {
-    public int IdProdCarrito { get; set; }
+    public int IdProducto { get; set; }
 
-    public int? IdProducto { get; set; }
-
-    public int? IdCarrito { get; set; }
+    public int IdCarrito { get; set; }
 
     public int Cantidad { get; set; }
 
