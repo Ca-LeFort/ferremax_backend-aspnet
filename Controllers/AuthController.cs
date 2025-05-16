@@ -50,8 +50,6 @@ public class AuthController : ControllerBase
             }
 
             LogRut = empleado.RutEmpleado;
-            LogNombre = empleado.PNombre;
-            LogEmail = empleado.Email;
 
             // Asignación de tipos de empleado
             if(empleado.IdTipoEmp == 1)
@@ -99,12 +97,10 @@ public class AuthController : ControllerBase
             }
 
             LogRut = cliente.RutCliente;
-            LogNombre = cliente.PNombre;
-            LogEmail = cliente.Email;
             LogRol = "cliente";
         }
 
-        var token = AddTokenJWT(LogRut, LogNombre, LogEmail, LogRol);
+        var token = AddTokenJWT(LogRut, LogRol);
 
         return Ok(new 
         {
@@ -112,7 +108,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    private string AddTokenJWT(string Rut, string Nombre, string Email, string Rol)
+    private string AddTokenJWT(string Rut, string Rol)
     {
         #pragma warning disable CS8604 // Posible argumento de referencia nulo
         var key = new SymmetricSecurityKey(
@@ -125,9 +121,7 @@ public class AuthController : ControllerBase
         var claims = new[]
         {
             new Claim("rut", Rut),
-            new Claim("nombre", Nombre),
-            new Claim("email", Email),
-            new Claim(ClaimTypes.Role, Rol)
+            new Claim("rol", Rol)
         };
 
         var token = new JwtSecurityToken(
