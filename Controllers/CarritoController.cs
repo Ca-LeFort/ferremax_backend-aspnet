@@ -82,10 +82,10 @@ namespace ApiPrincipal_Ferremas.Controllers
             }
 
             // Ahora buscamos el carrito activo por el cliente autentificado
-            var carrito = _context.Carritos
+            var carrito = await _context.Carritos
                 .Include(c => c.ProductoCarritos)
                 .ThenInclude(pc => pc.IdProductoNavigation)
-                .FirstOrDefault(c => c.RutCliente == rutCliente && c.Estado == "Activo");
+                .FirstOrDefaultAsync(c => c.RutCliente == rutCliente && c.Estado == "Activo");
 
             if (carrito == null)
             {
