@@ -447,7 +447,7 @@ public partial class SistemaFerremasContext : DbContext
 
         modelBuilder.Entity<ProductoCarrito>(entity =>
         {
-            entity.HasKey(e => e.IdProdCarrito).HasName("PRIMARY");
+            entity.HasKey(pc => new {pc.IdProducto, pc.IdCarrito});
 
             entity.ToTable("PRODUCTO_CARRITO");
 
@@ -455,7 +455,6 @@ public partial class SistemaFerremasContext : DbContext
 
             entity.HasIndex(e => e.IdProducto, "id_producto");
 
-            entity.Property(e => e.IdProdCarrito).HasColumnName("id_prod_carrito");
             entity.Property(e => e.Cantidad).HasColumnName("cantidad");
             entity.Property(e => e.IdCarrito).HasColumnName("id_carrito");
             entity.Property(e => e.IdProducto).HasColumnName("id_producto");

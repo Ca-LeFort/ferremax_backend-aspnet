@@ -7,131 +7,133 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-[Route("api/auth")]
-[ApiController]
-public class AuthController : ControllerBase
+namespace ApiPrincipal_Ferremas.Controllers
 {
-    private readonly IPasswordHasher<BaseUser> _passwordHasher;
-    private readonly SistemaFerremasContext _context;
-    private readonly IConfiguration _config;
-
-    public AuthController(IPasswordHasher<BaseUser> passwordHasher, SistemaFerremasContext context, IConfiguration config)
+    [Route("api/auth")]
+    [ApiController]
+    public class AuthController: ControllerBase
     {
-        _passwordHasher = passwordHasher;
-        _context = context;
-        _config = config;
-    }
+        private readonly IPasswordHasher<BaseUser> _passwordHasher;
+        private readonly SistemaFerremasContext _context;
+        private readonly IConfiguration _config;
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDTO dto)
-    {
-        var dominio = dto.Email.Split('@').Last().ToLower();
-        string LogRut = "";
-        string LogNombre = "";
-        string LogEmail = "";
-        string LogRol = "";
-        
-        if (dominio == "ferremas.cl")
+        public AuthController(IPasswordHasher<BaseUser> passwordHasher, SistemaFerremasContext context, IConfiguration config)
         {
-            var empleado = await _context.Empleados.FirstOrDefaultAsync(e => e.Email == dto.Email);
-            
-            #pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
-            var empleadoBase = new BaseUser { Email = empleado.Email };
-            #pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
-
-            var resultado = _passwordHasher.VerifyHashedPassword(empleadoBase, empleado.Password, dto.Password);
-
-            if (empleado == null || resultado != PasswordVerificationResult.Success)
-            {
-                return Unauthorized(new 
-                { 
-                    mensaje = "Correo y/o contraseña incorrectas" 
-                });
-            }
-
-            LogRut = empleado.RutEmpleado;
-
-            // Asignación de tipos de empleado
-            if(empleado.IdTipoEmp == 1)
-            {
-                LogRol = "administrador";
-            } 
-            else if (empleado.IdTipoEmp == 2)
-            {
-                LogRol = "encargado";
-            }
-            else if (empleado.IdTipoEmp == 3)
-            {
-                LogRol = "bodeguero";
-            }
-            else if (empleado.IdTipoEmp == 4)
-            {
-                LogRol = "contador";
-            }
-            
-        }
-        else
-        {
-            var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.Email == dto.Email);
-
-            if (cliente == null)
-            {
-                return Unauthorized(new
-                {
-                    mensaje = "Correo y/o contraseña incorrectas"
-                });
-            }
-
-            #pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
-            var clienteBase = new BaseUser { Email = cliente.Email };
-            #pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
-
-            var resultado = _passwordHasher.VerifyHashedPassword(clienteBase, cliente.Password, dto.Password);
-
-            if (resultado != PasswordVerificationResult.Success)
-            {
-                return Unauthorized(new
-                {
-                    mensaje = "Correo y/o contraseña incorrectas"
-                });
-            }
-
-            LogRut = cliente.RutCliente;
-            LogRol = "cliente";
+            _passwordHasher = passwordHasher;
+            _context = context;
+            _config = config;
         }
 
-        var token = AddTokenJWT(LogRut, LogRol);
-
-        return Ok(new 
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDTO dto)
         {
-            token, LogRol
-        });
-    }
+            var parts = dto.Email.Split('@');
+            var dominio = parts[parts.Length - 1].ToLower();
+            string LogRut = "";
+            string LogRol = "";
+            
+            if (dominio == "ferremas.cl")
+            {
+                var empleado = await _context.Empleados.FirstOrDefaultAsync(e => e.Email == dto.Email);
+                
+                #pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
+                var empleadoBase = new BaseUser { Email = empleado.Email };
+                #pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
 
-    private string AddTokenJWT(string Rut, string Rol)
-    {
-        #pragma warning disable CS8604 // Posible argumento de referencia nulo
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_config["Jwt:Key"])
-        );
-        #pragma warning restore CS8604 // Posible argumento de referencia nulo
+                var resultado = _passwordHasher.VerifyHashedPassword(empleadoBase, empleado.Password, dto.Password);
 
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                if (empleado == null || resultado != PasswordVerificationResult.Success)
+                {
+                    return Unauthorized(new 
+                    { 
+                        mensaje = "Correo y/o contraseña incorrectas" 
+                    });
+                }
 
-        var claims = new[]
+                LogRut = empleado.RutEmpleado;
+
+                // Asignación de tipos de empleado
+                if(empleado.IdTipoEmp == 1)
+                {
+                    LogRol = "administrador";
+                } 
+                else if (empleado.IdTipoEmp == 2)
+                {
+                    LogRol = "encargado";
+                }
+                else if (empleado.IdTipoEmp == 3)
+                {
+                    LogRol = "bodeguero";
+                }
+                else if (empleado.IdTipoEmp == 4)
+                {
+                    LogRol = "contador";
+                }
+                
+            }
+            else
+            {
+                var cliente = await _context.Clientes.FirstOrDefaultAsync(c => c.Email == dto.Email);
+
+                if (cliente == null)
+                {
+                    return Unauthorized(new
+                    {
+                        mensaje = "Correo y/o contraseña incorrectas"
+                    });
+                }
+
+                #pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
+                var clienteBase = new BaseUser { Email = cliente.Email };
+                #pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
+
+                var resultado = _passwordHasher.VerifyHashedPassword(clienteBase, cliente.Password, dto.Password);
+
+                if (resultado != PasswordVerificationResult.Success)
+                {
+                    return Unauthorized(new
+                    {
+                        mensaje = "Correo y/o contraseña incorrectas"
+                    });
+                }
+
+                LogRut = cliente.RutCliente;
+                LogRol = "cliente";
+            }
+
+            var token = AddTokenJWT(LogRut, LogRol);
+
+            return Ok(new 
+            {
+                token, LogRol
+            });
+        }
+
+        private string AddTokenJWT(string Rut, string Rol)
         {
-            new Claim("rut", Rut),
-            new Claim("rol", Rol)
-        };
+            #pragma warning disable CS8604 // Posible argumento de referencia nulo
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_config["Jwt:Key"])
+            );
+            #pragma warning restore CS8604 // Posible argumento de referencia nulo
 
-        var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"],
-            audience: _config["Jwt:Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(5),
-            signingCredentials: creds
-        );
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+            var claims = new[]
+            {
+                new Claim("rut", Rut),
+                new Claim("rol", Rol)
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(5),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
 }
