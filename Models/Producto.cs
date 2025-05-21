@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ApiPrincipal_Ferremas.Models;
 
 public partial class Producto
 {
+    [Column("id_producto")]
     public int IdProducto { get; set; }
 
     public string Nombre { get; set; } = null!;
