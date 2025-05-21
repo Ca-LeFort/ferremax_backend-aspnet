@@ -1,4 +1,5 @@
 ﻿using ApiPrincipal_Ferremas.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using System.Security.Claims;
 
 namespace ApiPrincipal_Ferremas.Controllers
 {
+    [Authorize(Policy = "ClienteOnly")]
     [Route("api/carrito")]
     [ApiController]
     public class CarritoController : ControllerBase
@@ -23,7 +25,7 @@ namespace ApiPrincipal_Ferremas.Controllers
         public async Task<IActionResult> crearCarrito()
         {
             var identidad = HttpContext.User.Identity as ClaimsIdentity;
-            var rutCliente = identidad?.FindFirst("rut_cliente")?.Value;
+            var rutCliente = identidad?.FindFirst("rut")?.Value;
 
             if (string.IsNullOrWhiteSpace(rutCliente))
             {
@@ -43,28 +45,51 @@ namespace ApiPrincipal_Ferremas.Controllers
             return Ok();
         }
 
-        // POST: api/carrito/{carritoId}
+        // POST: api/carrito/{carritoId}/agregar-producto
         [HttpPost("{carritoId}/agregar-producto")]
-        public IActionResult agregarProducto(int carritoId, int productoId, int cantidad)
+        public async Task<IActionResult> agregarProducto(int carritoId, [FromBody] ProductoCarritoDTO request)
         {
+            var productos = await _context.Productos.ToListAsync();
+            Console.WriteLine($"Total de productos en la BD: {productos.Count}");
+
+            foreach (var p in productos)
+            {
+                Console.WriteLine($"Producto encontrado: {p.IdProducto} - {p.Nombre}");
+            }
+
+            Console.WriteLine($"Producto ID recibido: {request.IdProducto}");
+            Console.WriteLine($"Cantidad recibida: {request.cantidad}");
+
+            int idProducto = Convert.ToInt32(request.IdProducto);
+            var producto = await _context.Productos.FirstOrDefaultAsync(p => p.IdProducto == idProducto);
+
+            Console.WriteLine($"Producto encontrado: {producto}");
+
+            if (producto == null) 
+            { 
+                return NotFound("El producto no existe");
+            }
+
             var productoCarrito = _context.ProductoCarritos
-                .FirstOrDefault(pc => pc.IdCarrito == carritoId && pc.IdProducto == productoId);
+                .FirstOrDefault(pc => pc.IdCarrito == carritoId && pc.IdProducto == request.IdProducto);
 
             if (productoCarrito != null)
             {
-                productoCarrito.Cantidad += cantidad;
+                productoCarrito.Cantidad += request.cantidad;
             }
             else
             {
                 productoCarrito = new ProductoCarrito
                 {
                     IdCarrito = carritoId,
-                    IdProducto = productoId,
-                    Cantidad = cantidad
+                    IdProducto = request.IdProducto,
+                    IdProductoNavigation = producto,
+                    Cantidad = request.cantidad
                 };
                 _context.ProductoCarritos.Add(productoCarrito);
             }
-            _context.SaveChanges();
+            
+            await _context.SaveChangesAsync();
             return Ok("Producto agregado al carrito");
         }
 
@@ -74,7 +99,7 @@ namespace ApiPrincipal_Ferremas.Controllers
         {
             // Rescatamos el RUT del Cliente desde el token generado
             var identificador = HttpContext.User.Identity as ClaimsIdentity;
-            var rutCliente = identificador?.FindFirst("rut-cliente")?.Value;
+            var rutCliente = identificador?.FindFirst("rut")?.Value;
 
             if (string.IsNullOrEmpty(rutCliente))
             {

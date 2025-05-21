@@ -1,9 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using ApiPrincipal_Ferremas.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,10 +30,37 @@ builder.Services.AddCors(options =>
                        .AllowAnyMethod());
 });
 
+// Configuración de Permisos de navegaciones
+builder.Services.AddAuthorization(options =>
+{
+    // Clientes
+    options.AddPolicy("ClienteOnly", policy =>
+        policy.RequireClaim("rol", "cliente"));
+
+    // Administradores
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireClaim("rol", "administrador"));
+
+    // Encargados
+    options.AddPolicy("EncargadoOnly", policy =>
+        policy.RequireClaim("rol", "encargado"));
+
+    // Bodegueros
+    options.AddPolicy("BodegueroOnly", policy =>
+        policy.RequireClaim("rol", "bodeguero"));
+
+    // Contadores
+    options.AddPolicy("ContadorOnly", policy =>
+        policy.RequireClaim("rol", "contador"));
+
+});
+
 // Configuración de JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => 
     {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -51,6 +79,10 @@ builder.Services.AddDbContext<SistemaFerremasContext>(opt =>
     opt.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+});
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<EmpleadoService>();
 var app = builder.Build();
