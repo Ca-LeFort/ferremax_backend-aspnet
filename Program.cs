@@ -81,7 +81,7 @@ builder.Services.AddDbContext<SistemaFerremasContext>(opt =>
 builder.Services.AddControllers();
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<EmpleadoService>();
