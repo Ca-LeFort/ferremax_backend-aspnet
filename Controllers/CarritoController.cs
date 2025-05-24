@@ -119,5 +119,70 @@ namespace ApiPrincipal_Ferremas.Controllers
 
             return Ok(carrito);
         }
+
+        // PUT: api/carrito/{carritoId}/actualizar-producto
+        [Authorize(Policy = "ClienteOnly")]
+        [HttpPut("{carritoId}/actualizar-producto")]
+        public async Task<IActionResult> ActualizarProdCarrito(int carritoId, [FromBody] ProductoCarritoDTO request)
+        {
+            try
+            {
+                var productoCarrito = await _context.ProductoCarritos
+                    .FirstOrDefaultAsync(pc => pc.IdCarrito == carritoId && pc.IdProducto == request.IdProducto);
+
+                if (productoCarrito == null)
+                {
+                    return NotFound("No se encuentra producto en el carrito");
+                }
+
+                if (request.nuevaCantidad <= 0)
+                {
+                    return BadRequest("La cantidad debe ser mayor a 0.");
+                }
+
+                productoCarrito.Cantidad = request.nuevaCantidad;
+                await _context.SaveChangesAsync();
+
+                return Ok("Cantidad de producto actualizada correctamente.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // DELETE: api/carrito/{carritoId}/eliminar-carrito/{productoId}
+        [Authorize(Policy = "ClienteOnly")]
+        [HttpDelete("{carritoId}/eliminar-carrito/{productoId}")]
+        public async Task<IActionResult> EliminarProdCarrito(int carritoId, int productoId)
+        {
+            try
+            {
+                var productoCarrito = await _context.ProductoCarritos
+                    .FirstOrDefaultAsync(pc => pc.IdCarrito == carritoId && pc.IdProducto == productoId);
+
+                if (productoCarrito == null)
+                {
+                    return NotFound("No se encuentra producto en el carrito");
+                }
+
+                _context.ProductoCarritos.Remove(productoCarrito);
+                await _context.SaveChangesAsync();
+
+                return Ok("Producto eliminado del carrito.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
     }
 }
