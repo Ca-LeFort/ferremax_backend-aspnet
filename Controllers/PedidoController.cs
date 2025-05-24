@@ -1,8 +1,10 @@
 ﻿using ApiPrincipal_Ferremas.Models;
+using ApiPrincipal_Ferremas.PATCHModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 using System.Security.Claims;
 
 namespace ApiPrincipal_Ferremas.Controllers
@@ -99,6 +101,85 @@ namespace ApiPrincipal_Ferremas.Controllers
                 }
 
                 return Ok(pedido);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // POST: api/pedidos/crear
+        [Authorize(Policy = "ClienteOnly")]
+        [HttpPost("crear")]
+        public async Task<IActionResult> CrearPedido([FromBody] PedidoDTO request)
+        {
+            try
+            {
+                var identidad = HttpContext.User.Identity as ClaimsIdentity;
+                var rutCliente = identidad?.FindFirst("rut")?.Value;
+
+                if (string.IsNullOrWhiteSpace(rutCliente))
+                {
+                    return Unauthorized("El usuario debe estar autenticado");
+                }
+
+                var carrito = await _context.Carritos
+                    .FirstOrDefaultAsync(c => c.RutCliente == rutCliente && c.Estado == "Activo");
+
+                if (carrito == null)
+                {
+                    return NotFound("No se encontró un carrito activo.");
+                }
+
+                var pedido = new Pedido
+                {
+                    FechaPedido = DateTime.Now,
+                    IdCarrito = carrito.IdCarrito,
+                    RutCliente = rutCliente,
+                    IdEstPedido = request.IdEstPedido,
+                    IdDespacho = request.IdDespacho,
+                    IdSucursal = request.IdSucursal,
+                    PrecioTotal = request.PrecioTotal ?? 0
+                };
+
+                _context.Pedidos.Add(pedido);
+                await _context.SaveChangesAsync();
+
+                return StatusCode(201, "Pedido creado");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // PUT: api/pedidos/{idPedido}/actualizar-pedido
+        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "EncargadoOnly")]
+        [Authorize(Policy = "BodegueroOnly")]
+        [HttpPut("{idPedido}/actualizar-pedido")]
+        public async Task<IActionResult> ActualizarPedido(int idPedido, [FromBody] PedidoDTO request)
+        {
+            try
+            {
+                var pedido = await _context.Pedidos.FindAsync(idPedido);
+                if (pedido == null)
+                {
+                    return NotFound("Pedido no encontrado");
+                }
+
+                pedido.IdEstPedido = request.IdEstPedido;
+                await _context.SaveChangesAsync();
+
+                return Ok("Pedido actualizado");
             }
             catch (Exception ex)
             {
