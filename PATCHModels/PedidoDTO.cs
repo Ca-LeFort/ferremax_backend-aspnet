@@ -2,7 +2,9 @@
 {
     public class PedidoDTO
     {
-        public int? PrecioTotal { get; set; }
+        public int IdPedido { get; set; }
+
+        public int PrecioTotal { get; set; }
 
         public int? IdCarrito { get; set; }
 
