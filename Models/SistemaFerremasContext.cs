@@ -56,6 +56,8 @@ public partial class SistemaFerremasContext : DbContext
 
     public virtual DbSet<TipoProducto> TipoProductos { get; set; }
 
+    public DbSet<CountResult> CountResult { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     // #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseMySql("server=localhost;database=sistema_ferremas;user=ferremas;password=ferremas2025", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql"));
@@ -226,6 +228,7 @@ public partial class SistemaFerremasContext : DbContext
                 .HasMaxLength(50)
                 .HasColumnName("s_nombre");
             entity.Property(e => e.Telefono).HasColumnName("telefono");
+            entity.Property(e => e.cambioPassword).HasColumnName("cambioPassword");
 
             entity.HasOne(d => d.IdComunaNavigation).WithMany(p => p.Empleados)
                 .HasForeignKey(d => d.IdComuna)
@@ -516,7 +519,7 @@ public partial class SistemaFerremasContext : DbContext
                 .HasColumnName("nombre");
         });
 
-        OnModelCreatingPartial(modelBuilder);
+        modelBuilder.Entity<CountResult>().HasNoKey();
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
