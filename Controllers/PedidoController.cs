@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace ApiPrincipal_Ferremas.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/pedidos")]
     [ApiController]
     public class PedidoController : ControllerBase
@@ -22,9 +22,9 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // GET: api/pedidos/todos (sólo empleados mencionadas)
-        [Authorize(Policy = "AdminOnly")]
+        /*[Authorize(Policy = "AdminOnly")]
         [Authorize(Policy = "EncargadoOnly")]
-        [Authorize(Policy = "BodegueroOnly")]
+        [Authorize(Policy = "BodegueroOnly")]*/
         [HttpGet("todos")]
         public async Task<IActionResult> ListarPedidos()
         {
@@ -113,7 +113,7 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // POST: api/pedidos/crear
-        [Authorize(Policy = "ClienteOnly")]
+        //[Authorize(Policy = "ClienteOnly")]
         [HttpPost("crear")]
         public async Task<IActionResult> CrearPedido([FromBody] PedidoDTO request)
         {
@@ -143,7 +143,7 @@ namespace ApiPrincipal_Ferremas.Controllers
                     IdEstPedido = request.IdEstPedido,
                     IdDespacho = request.IdDespacho,
                     IdSucursal = request.IdSucursal,
-                    PrecioTotal = request.PrecioTotal ?? 0
+                    PrecioTotal = request.PrecioTotal
                 };
 
                 _context.Pedidos.Add(pedido);
@@ -161,11 +161,11 @@ namespace ApiPrincipal_Ferremas.Controllers
             }
         }
 
-        // PUT: api/pedidos/{idPedido}/actualizar-pedido
-        [Authorize(Policy = "AdminOnly")]
+        // PUT: api/pedidos/{idPedido}
+        /*[Authorize(Policy = "AdminOnly")]
         [Authorize(Policy = "EncargadoOnly")]
-        [Authorize(Policy = "BodegueroOnly")]
-        [HttpPut("{idPedido}/actualizar-pedido")]
+        [Authorize(Policy = "BodegueroOnly")]*/
+        [HttpPut("{idPedido}")]
         public async Task<IActionResult> ActualizarPedido(int idPedido, [FromBody] PedidoDTO request)
         {
             try
@@ -173,13 +173,52 @@ namespace ApiPrincipal_Ferremas.Controllers
                 var pedido = await _context.Pedidos.FindAsync(idPedido);
                 if (pedido == null)
                 {
-                    return NotFound("Pedido no encontrado");
+                    return NotFound(new 
+                    { 
+                        mensaje = "Pedido no encontrado" 
+                    });
                 }
 
                 pedido.IdEstPedido = request.IdEstPedido;
                 await _context.SaveChangesAsync();
 
                 return Ok("Pedido actualizado");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // DELETE: api/pedidos/{idPedido}
+        /*[Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "EncargadoOnly")]
+        [Authorize(Policy = "BodegueroOnly")]*/
+        [HttpDelete("{idPedido}")]
+        public async Task<IActionResult> EliminarPedido(int idPedido)
+        {
+            try
+            {
+                var pedido = await _context.Pedidos.FindAsync(idPedido);
+                if (pedido == null)
+                {
+                    return NotFound(new 
+                    { 
+                        mensaje = "Pedido no encontrado" 
+                    });
+                }
+
+                _context.Pedidos.Remove(pedido);
+                await _context.SaveChangesAsync();
+
+                return Ok(new 
+                { 
+                    mensaje = "Pedido eliminado" 
+                });
             }
             catch (Exception ex)
             {
