@@ -7,7 +7,7 @@ using MercadoPago.Resource.Preference;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace ApiPrincipal_Ferremas.Controllers
 {
@@ -35,7 +35,7 @@ namespace ApiPrincipal_Ferremas.Controllers
                 MercadoPagoConfig.AccessToken = _config["MercadoPago:AccessToken"];
 
                 // Request para la API externa de Mercado Pago
-                var request = new PreferenceRequest
+                var preference = new PreferenceRequest
                 {
                     Items = new List<PreferenceItemRequest>
                     {
@@ -61,11 +61,11 @@ namespace ApiPrincipal_Ferremas.Controllers
                         Installments = 6 // Cantidad de cuotas que aceptará según el negocio
                     }
                 };
-
+                
                 var client = new PreferenceClient();
-                Preference preference = await client.CreateAsync(request);
+                Preference pref = await client.CreateAsync(preference);
 
-                return Ok(new { id = preference.Id, init_point = preference.InitPoint });
+                return Ok(new { id = pref.Id, init_point = pref.InitPoint });
             }
             catch (Exception ex)
             {
@@ -82,7 +82,9 @@ namespace ApiPrincipal_Ferremas.Controllers
         public IActionResult Success([FromQuery] PagoResponse pagoResponse)
         {
             if (pagoResponse == null || string.IsNullOrEmpty(pagoResponse.payment_id))
+            {
                 return BadRequest("Los datos de pago no fueron proporcionados correctamente.");
+            }
 
             return new JsonResult(new
             {

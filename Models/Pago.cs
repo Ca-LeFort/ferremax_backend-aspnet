@@ -9,7 +9,7 @@ public partial class Pago
 
     public int Monto { get; set; }
 
-    public DateOnly FechaPago { get; set; }
+    public DateTime FechaPago { get; set; }
 
     public string? Referencia { get; set; }
 
