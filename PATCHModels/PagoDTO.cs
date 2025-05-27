@@ -2,7 +2,7 @@
 {
     public class PagoDTO
     {
-        public int Monto { get; set; }
+        public int? Monto { get; set; }
 
         public string? Referencia { get; set; }
 

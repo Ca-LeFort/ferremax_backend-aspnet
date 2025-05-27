@@ -7,6 +7,8 @@ using MercadoPago.Resource.Preference;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace ApiPrincipal_Ferremas.Controllers
@@ -23,6 +25,8 @@ namespace ApiPrincipal_Ferremas.Controllers
             _context = context;
             _config = config;
         }
+
+        /* PROCESO DE PAGO CON MERCADO PAGO */
 
         // POST: api/pagos/crear
         //[Authorize(Policy = "ClienteOnly")]
@@ -61,7 +65,7 @@ namespace ApiPrincipal_Ferremas.Controllers
                         Installments = 6 // Cantidad de cuotas que aceptará según el negocio
                     }
                 };
-                
+
                 var client = new PreferenceClient();
                 Preference pref = await client.CreateAsync(preference);
 
@@ -144,6 +148,171 @@ namespace ApiPrincipal_Ferremas.Controllers
                 ProcessingMode = pagoResponse.processing_mode,
                 MerchantAccountId = pagoResponse.merchant_account_id
             });
+        }
+
+        /* FIN PROCESO DE PAGO CON MERCADO PAGO */
+
+        // PROCESO DE PAGO MEDIANTE TRANSFERENCIA
+        // POST: api/pagos/transferencia
+        [Authorize(Policy = "ClienteOnly")]
+        [HttpPost("transferencia")]
+        public async Task<IActionResult> CrearPagoTransferencia([FromBody] PagoDTO request)
+        {
+            try
+            {
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // GET: api/pagos/todos
+        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "ContadorOnly")]
+        [HttpGet("todos")]
+        public async Task<ActionResult<IEnumerable<Pago>>> ListarPagos()
+        {
+            try
+            {
+                return await _context.Pagos.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // GET: api/pagos/mis-pagos
+        [Authorize(Policy = "ClienteOnly")]
+        [HttpGet("mis-pagos")]
+        public async Task<IActionResult> ListarPagosCliente()
+        {
+            try
+            {
+                var identidad = HttpContext.User.Identity as ClaimsIdentity;
+                var rutCliente = identidad?.FindFirst("rut")?.Value;
+
+                if (string.IsNullOrWhiteSpace(rutCliente))
+                {
+                    return Unauthorized("El usuario debe estar autenticado");
+                }
+
+                // Sentencia SQL
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // GET: api/pagos/{idPago}
+        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "ClienteOnly")]
+        [Authorize(Policy = "ContadorOnly")]
+        [HttpGet("{idPago}")]
+        public async Task<ActionResult> VerPago(int idPago)
+        {
+            try
+            {
+                var pago = await _context.Pagos.FindAsync(idPago);
+                if (pago == null)
+                {
+                    return NotFound(new
+                    {
+                        mensaje = "Pago no encontrado"
+                    });
+                }
+
+                return Ok(pago);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // PUT: api/pagos/{idPago}
+        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "ContadorOnly")]
+        [HttpPut("{idPago}")]
+        public async Task<IActionResult> ActualizarPago(int idPago, [FromBody] PagoDTO request)
+        {
+            try
+            {
+                var pago = await _context.Pagos.FindAsync(idPago);
+                if (pago == null)
+                {
+                    return NotFound(new
+                    {
+                        mensaje = "Pago no encontrado"
+                    });
+                }
+
+                pago.IdEstPago = request.IdEstPago;
+                await _context.SaveChangesAsync();
+
+                return Ok("Estado de Pago actualizado");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // DELETE: api/pagos/{idPago}
+        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "ContadorOnly")]
+        [HttpDelete("{idPago}")]
+        public async Task<IActionResult> EliminarPago(int idPago)
+        {
+            try
+            {
+                var pago = await _context.Pagos.FindAsync(idPago);
+                if (pago == null)
+                {
+                    return NotFound(new
+                    {
+                        mensaje = "Pago no encontrado"
+                    });
+                }
+
+                _context.Pagos.Remove(pago);
+                await _context.SaveChangesAsync();
+
+                return Ok("Pago eliminado correctamente");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno, vuelve a intentar más tarde",
+                    detalle = ex.Message
+                });
+            }
         }
     }
 }

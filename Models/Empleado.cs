@@ -34,6 +34,8 @@ public partial class Empleado
     public int? IdComuna { get; set; }
 
     public int? IdTipoEmp { get; set; }
+    
+    public int cambioPassword { get; set; }
 
     public virtual Comuna? IdComunaNavigation { get; set; }
 
