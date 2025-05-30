@@ -5,11 +5,8 @@ using MercadoPago.Client.Preference;
 using MercadoPago.Config;
 using MercadoPago.Resource.Preference;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace ApiPrincipal_Ferremas.Controllers
 {
@@ -31,10 +28,24 @@ namespace ApiPrincipal_Ferremas.Controllers
         // POST: api/pagos/crear
         //[Authorize(Policy = "ClienteOnly")]
         [HttpPost("crear")]
-        public async Task<IActionResult> CrearPago()
+        public async Task<IActionResult> CrearPagoMercadoPago([FromBody] PedidoDTO request)
         {
             try
             {
+                // Primero guardar parcial en la base de datos
+                var pagoTarjeta = new Pago
+                {
+                    Monto = request.PrecioTotal,
+                    FechaPago = DateTime.Now,
+                    Referencia = null,
+                    IdPedido = request.IdPedido,
+                    IdMedioPago = 1,
+                    IdEstPago = 1
+                };
+
+                _context.Pagos.Add(pagoTarjeta);
+                await _context.SaveChangesAsync();
+
                 // Token de Acceso a Mercado Pago
                 MercadoPagoConfig.AccessToken = _config["MercadoPago:AccessToken"];
 
@@ -48,7 +59,7 @@ namespace ApiPrincipal_Ferremas.Controllers
                             Title = "Productos de Ferremas",
                             Quantity = 1,
                             CurrencyId = "CLP",
-                            UnitPrice = 25000
+                            UnitPrice = request.PrecioTotal
                         }
                     },
                     BackUrls = new PreferenceBackUrlsRequest
@@ -58,6 +69,7 @@ namespace ApiPrincipal_Ferremas.Controllers
                         Pending = "https://localhost:7007/api/pagos/Pending"
                     },
                     AutoReturn = "approved",
+                    ExternalReference = request.IdPedido.ToString(),
                     PaymentMethods = new PreferencePaymentMethodsRequest
                     {
                         ExcludedPaymentMethods = [],
@@ -69,7 +81,12 @@ namespace ApiPrincipal_Ferremas.Controllers
                 var client = new PreferenceClient();
                 Preference pref = await client.CreateAsync(preference);
 
-                return Ok(new { id = pref.Id, init_point = pref.InitPoint });
+                return Ok(new 
+                { 
+                    status = "Se guardó de forma parcial en la base de datos", 
+                    id = pref.Id, 
+                    init_point = pref.InitPoint 
+                });
             }
             catch (Exception ex)
             {
@@ -83,12 +100,29 @@ namespace ApiPrincipal_Ferremas.Controllers
 
         // Endpoints para resultados de pagos
         [HttpGet("Success")]
-        public IActionResult Success([FromQuery] PagoResponse pagoResponse)
+        public async Task<IActionResult> Success([FromQuery] PagoResponse pagoResponse)
         {
             if (pagoResponse == null || string.IsNullOrEmpty(pagoResponse.payment_id))
             {
                 return BadRequest("Los datos de pago no fueron proporcionados correctamente.");
             }
+
+            int idPedido = int.Parse(pagoResponse.external_reference);
+
+            var pago = await _context.Pagos
+                .FirstOrDefaultAsync(p => p.IdPedido ==  idPedido);
+
+            if (pago == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Pago no encontrado"
+                });
+            }
+
+            pago.IdEstPago = 3;
+            pago.Referencia = pagoResponse.payment_id;
+            await _context.SaveChangesAsync();
 
             return new JsonResult(new
             {
@@ -107,10 +141,27 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         [HttpGet("Failure")]
-        public IActionResult Failure([FromQuery] PagoResponse pagoResponse)
+        public async Task<IActionResult> Failure([FromQuery] PagoResponse pagoResponse)
         {
             if (pagoResponse == null || string.IsNullOrEmpty(pagoResponse.payment_id))
                 return BadRequest("Los datos de pago no fueron proporcionados correctamente.");
+
+            int idPedido = int.Parse(pagoResponse.external_reference);
+
+            var pago = await _context.Pagos
+                .FirstOrDefaultAsync(p => p.IdPedido == idPedido);
+
+            if (pago == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Pago no encontrado"
+                });
+            }
+
+            pago.IdEstPago = 4;
+            pago.Referencia = pagoResponse.payment_id;
+            await _context.SaveChangesAsync();
 
             return new JsonResult(new
             {
@@ -154,13 +205,29 @@ namespace ApiPrincipal_Ferremas.Controllers
 
         // PROCESO DE PAGO MEDIANTE TRANSFERENCIA
         // POST: api/pagos/transferencia
-        [Authorize(Policy = "ClienteOnly")]
+        //[Authorize(Policy = "ClienteOnly")]
         [HttpPost("transferencia")]
-        public async Task<IActionResult> CrearPagoTransferencia([FromBody] PagoDTO request)
+        public async Task<IActionResult> CrearPagoTransferencia([FromBody] Pedido request)
         {
             try
             {
-                return Ok();
+                var pagoTransferencia = new Pago
+                {
+                    Monto = request.PrecioTotal,
+                    FechaPago = DateTime.Now,
+                    Referencia = null,
+                    IdPedido = request.IdPedido,
+                    IdMedioPago = 2,
+                    IdEstPago = 2
+                };
+
+                _context.Pagos.Add(pagoTransferencia);
+                await _context.SaveChangesAsync();
+
+                return StatusCode(201, new
+                {
+                    mensaje = "Pago por transferencia agregado"
+                });
             }
             catch (Exception ex)
             {
@@ -192,38 +259,8 @@ namespace ApiPrincipal_Ferremas.Controllers
             }
         }
 
-        // GET: api/pagos/mis-pagos
-        [Authorize(Policy = "ClienteOnly")]
-        [HttpGet("mis-pagos")]
-        public async Task<IActionResult> ListarPagosCliente()
-        {
-            try
-            {
-                var identidad = HttpContext.User.Identity as ClaimsIdentity;
-                var rutCliente = identidad?.FindFirst("rut")?.Value;
-
-                if (string.IsNullOrWhiteSpace(rutCliente))
-                {
-                    return Unauthorized("El usuario debe estar autenticado");
-                }
-
-                // Sentencia SQL
-
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    mensaje = "Error interno, vuelve a intentar más tarde",
-                    detalle = ex.Message
-                });
-            }
-        }
-
         // GET: api/pagos/{idPago}
         [Authorize(Policy = "AdminOnly")]
-        [Authorize(Policy = "ClienteOnly")]
         [Authorize(Policy = "ContadorOnly")]
         [HttpGet("{idPago}")]
         public async Task<ActionResult> VerPago(int idPago)
