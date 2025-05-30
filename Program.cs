@@ -1,4 +1,5 @@
 using ApiPrincipal_Ferremas.Models;
+using ApiPrincipal_Ferremas.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -85,6 +86,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<EmpleadoService>();
+builder.Services.AddHttpClient<ResendEmailService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
