@@ -32,19 +32,39 @@ namespace ApiPrincipal_Ferremas.Controllers
         {
             try
             {
-                // Primero guardar parcial en la base de datos
-                var pagoTarjeta = new Pago
-                {
-                    Monto = request.PrecioTotal,
-                    FechaPago = DateTime.Now,
-                    Referencia = null,
-                    IdPedido = request.IdPedido,
-                    IdMedioPago = 1,
-                    IdEstPago = 1
-                };
+                var pago = await _context.Pagos
+                .FirstOrDefaultAsync(p => p.IdPedido == request.IdPedido);
 
-                _context.Pagos.Add(pagoTarjeta);
-                await _context.SaveChangesAsync();
+                var mensaje = "";
+
+                if (pago == null)
+                {
+                    var pagoTarjeta = new Pago
+                    {
+                        Monto = request.PrecioTotal,
+                        FechaPago = DateTime.Now,
+                        Referencia = null,
+                        IdPedido = request.IdPedido,
+                        IdMedioPago = 1,
+                        IdEstPago = 1
+                    };
+
+                    mensaje = "Se guardó de forma parcial en la base de datos";
+
+                    _context.Pagos.Add(pagoTarjeta);
+                    await _context.SaveChangesAsync();
+                }
+                else if (pago.IdEstPago == 1)
+                {
+                    mensaje = "El pago se encuentra pendiente del pago";
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        mensaje = "El pago se encuentra completado y/o rechazado"
+                    });
+                }
 
                 // Token de Acceso a Mercado Pago
                 MercadoPagoConfig.AccessToken = _config["MercadoPago:AccessToken"];
@@ -83,7 +103,7 @@ namespace ApiPrincipal_Ferremas.Controllers
 
                 return Ok(new 
                 { 
-                    status = "Se guardó de forma parcial en la base de datos", 
+                    status = mensaje, 
                     id = pref.Id, 
                     init_point = pref.InitPoint 
                 });
@@ -159,9 +179,18 @@ namespace ApiPrincipal_Ferremas.Controllers
                 });
             }
 
-            pago.IdEstPago = 4;
-            pago.Referencia = pagoResponse.payment_id;
-            await _context.SaveChangesAsync();
+            if (pagoResponse.status.Equals("null"))
+            {
+                pago.IdEstPago = 5;
+                pago.Referencia = null;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                pago.IdEstPago = 4;
+                pago.Referencia = pagoResponse.payment_id;
+                await _context.SaveChangesAsync();
+            }
 
             return new JsonResult(new
             {
@@ -180,10 +209,26 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         [HttpGet("Pending")]
-        public IActionResult Pending([FromQuery] PagoResponse pagoResponse)
+        public async Task<IActionResult> Pending([FromQuery] PagoResponse pagoResponse)
         {
             if (pagoResponse == null || string.IsNullOrEmpty(pagoResponse.payment_id))
                 return BadRequest("Los datos de pago no fueron proporcionados correctamente.");
+
+            int idPedido = int.Parse(pagoResponse.external_reference);
+
+            var pago = await _context.Pagos
+                .FirstOrDefaultAsync(p => p.IdPedido == idPedido);
+
+            if (pago == null)
+            {
+                return NotFound(new
+                {
+                    mensaje = "Pago no encontrado"
+                });
+            }
+
+            pago.Referencia = pagoResponse.payment_id;
+            await _context.SaveChangesAsync();
 
             return new JsonResult(new
             {
@@ -211,6 +256,14 @@ namespace ApiPrincipal_Ferremas.Controllers
         {
             try
             {
+                var pago = await _context.Pagos
+                    .FirstOrDefaultAsync(p => p.IdPedido == request.IdPedido);
+                
+                if (pago?.IdEstPago != 2)
+                {
+                    return BadRequest();
+                }
+
                 var pagoTransferencia = new Pago
                 {
                     Monto = request.PrecioTotal,
