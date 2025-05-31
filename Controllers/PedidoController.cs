@@ -140,7 +140,7 @@ namespace ApiPrincipal_Ferremas.Controllers
                     FechaPedido = DateTime.Now,
                     IdCarrito = carrito.IdCarrito,
                     RutCliente = rutCliente,
-                    IdEstPedido = request.IdEstPedido,
+                    IdEstPedido = 1,
                     IdDespacho = request.IdDespacho,
                     IdSucursal = request.IdSucursal,
                     PrecioTotal = request.PrecioTotal

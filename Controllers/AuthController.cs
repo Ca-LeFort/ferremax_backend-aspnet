@@ -48,16 +48,22 @@ namespace ApiPrincipal_Ferremas.Controllers
                         });
                     }
 
-                    return Unauthorized(new
+                    return BadRequest(new
                     {
                         mensaje = "Se requiere cambiar la contraseña por primera vez",
                         rutAdmin = empleado?.RutEmpleado
                     });
                 }
 
-#pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
+                if (empleado == null)
+                {
+                    return NotFound(new
+                    {
+                        mensaje = "Correo y/o contraseña incorrectas"
+                    });
+                }
+
                 var empleadoBase = new BaseUser { Email = empleado.Email };
-#pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
 
                 var resultado = _passwordHasher.VerifyHashedPassword(empleadoBase, empleado.Password, dto.Password);
 
@@ -96,15 +102,13 @@ namespace ApiPrincipal_Ferremas.Controllers
 
                 if (cliente == null)
                 {
-                    return Unauthorized(new
+                    return NotFound(new
                     {
                         mensaje = "Correo y/o contraseña incorrectas"
                     });
                 }
 
-                #pragma warning disable CS8602 // Desreferencia de una referencia posiblemente NULL.
                 var clienteBase = new BaseUser { Email = cliente.Email };
-                #pragma warning restore CS8602 // Desreferencia de una referencia posiblemente NULL.
 
                 var resultado = _passwordHasher.VerifyHashedPassword(clienteBase, cliente.Password, dto.Password);
 
@@ -157,7 +161,10 @@ namespace ApiPrincipal_Ferremas.Controllers
                 empleado.cambioPassword = 0;
                 await _context.SaveChangesAsync();
 
-                return Ok("Contraseña del Administrador modificado");
+                return Ok(new
+                {
+                    mensaje = "Contraseña del Administrador modificado"
+                });
             }
             catch (Exception ex)
             {
