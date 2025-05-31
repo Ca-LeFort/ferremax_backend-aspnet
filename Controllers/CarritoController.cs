@@ -32,17 +32,50 @@ namespace ApiPrincipal_Ferremas.Controllers
                 return Unauthorized("El usuario debe estar autenticado");
             }
 
-            var nuevoCarrito = new Carrito
+            var mensaje = "";
+
+            var carrito = await _context.Carritos.FirstOrDefaultAsync(c => c.RutCliente == rutCliente && c.Estado == "Activo");
+
+            if (carrito == null)
             {
-                FechaCreacion = DateOnly.FromDateTime(DateTime.Now),
-                Estado = "Activo",
-                RutCliente = rutCliente
-            };
+                var nuevoCarrito = new Carrito
+                {
+                    FechaCreacion = DateOnly.FromDateTime(DateTime.Now),
+                    Estado = "Activo",
+                    RutCliente = rutCliente
+                };
 
-            _context.Carritos.Add(nuevoCarrito);
-            await _context.SaveChangesAsync();
+                _context.Carritos.Add(nuevoCarrito);
+                await _context.SaveChangesAsync();
+                mensaje = "Se agregó el carrito del cliente";
+            }
 
-            return Ok();
+            mensaje = "Se usará el carrito existente y activo";
+
+            return Ok(new
+            {
+                mensaje = mensaje
+            });
+        }
+
+        [Authorize(Policy = "ClienteOnly")]
+        [HttpGet("carrito-activo")]
+        public IActionResult ObtenerCarritoActivo()
+        {
+            var rutCliente = User.Claims.FirstOrDefault(c => c.Type == "rut")?.Value;
+
+            if (rutCliente == null)
+                return Unauthorized("No se encontró el RUT en el token.");
+
+            var carrito = _context.Carritos
+                .Include(c => c.ProductoCarritos)
+                    .ThenInclude(pc => pc.IdProductoNavigation)
+                .FirstOrDefault(c => c.RutCliente == rutCliente && c.Estado == "Activo");
+
+            if (carrito == null)
+                return NotFound("No se encontró un carrito activo.");
+
+            return Ok(carrito);
         }
 
         // POST: api/carrito/{carritoId}/agregar-producto
@@ -90,7 +123,10 @@ namespace ApiPrincipal_Ferremas.Controllers
             }
             
             await _context.SaveChangesAsync();
-            return Ok("Producto agregado al carrito");
+            return Ok(new
+            {
+                mensaje = "Producto agregado al carrito"
+            });
         }
 
         // GET: api/carrito/mi-carrito
@@ -121,7 +157,6 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // PUT: api/carrito/{carritoId}/actualizar-producto
-        [Authorize(Policy = "ClienteOnly")]
         [HttpPut("{carritoId}/actualizar-producto")]
         public async Task<IActionResult> ActualizarProdCarrito(int carritoId, [FromBody] ProductoCarritoDTO request)
         {
@@ -143,7 +178,10 @@ namespace ApiPrincipal_Ferremas.Controllers
                 productoCarrito.Cantidad = request.nuevaCantidad;
                 await _context.SaveChangesAsync();
 
-                return Ok("Cantidad de producto actualizada correctamente.");
+                return Ok(new
+                {
+                    mensaje = "Cantidad de producto actualizada correctamente."
+                });
             }
             catch (Exception ex)
             {
@@ -156,7 +194,6 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // DELETE: api/carrito/{carritoId}/eliminar-carrito/{productoId}
-        [Authorize(Policy = "ClienteOnly")]
         [HttpDelete("{carritoId}/eliminar-carrito/{productoId}")]
         public async Task<IActionResult> EliminarProdCarrito(int carritoId, int productoId)
         {
@@ -173,7 +210,10 @@ namespace ApiPrincipal_Ferremas.Controllers
                 _context.ProductoCarritos.Remove(productoCarrito);
                 await _context.SaveChangesAsync();
 
-                return Ok("Producto eliminado del carrito.");
+                return Ok(new
+                {
+                    mensaje = "Producto eliminado del carrito."
+                });
             }
             catch (Exception ex)
             {
