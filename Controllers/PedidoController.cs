@@ -113,7 +113,7 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // POST: api/pedidos/crear
-        //[Authorize(Policy = "ClienteOnly")]
+        [Authorize(Policy = "ClienteOnly")]
         [HttpPost("crear")]
         public async Task<IActionResult> CrearPedido([FromBody] PedidoDTO request)
         {
@@ -146,10 +146,17 @@ namespace ApiPrincipal_Ferremas.Controllers
                     PrecioTotal = request.PrecioTotal
                 };
 
+                carrito.Estado = "Procesado";
+
                 _context.Pedidos.Add(pedido);
                 await _context.SaveChangesAsync();
 
-                return StatusCode(201, "Pedido creado");
+                return StatusCode(201, new
+                {
+                    mensaje = "Pedido creado",
+                    idPedido = pedido.IdPedido,
+                    monto = pedido.PrecioTotal
+                });
             }
             catch (Exception ex)
             {
