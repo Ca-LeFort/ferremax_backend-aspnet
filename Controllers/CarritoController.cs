@@ -22,7 +22,7 @@ namespace ApiPrincipal_Ferremas.Controllers
         // Primer paso: Agregar el carrito de compras antes de que agregue el producto al carrito
         // POST: api/carrito/crear
         [HttpPost("crear")]
-        public async Task<IActionResult> crearCarrito()
+        public async Task<IActionResult> CrearCarrito()
         {
             var identidad = HttpContext.User.Identity as ClaimsIdentity;
             var rutCliente = identidad?.FindFirst("rut")?.Value;
@@ -32,9 +32,8 @@ namespace ApiPrincipal_Ferremas.Controllers
                 return Unauthorized("El usuario debe estar autenticado");
             }
 
-            var mensaje = "";
-
-            var carrito = await _context.Carritos.FirstOrDefaultAsync(c => c.RutCliente == rutCliente && c.Estado == "Activo");
+            var carrito = await _context.Carritos
+                .FirstOrDefaultAsync(c => c.RutCliente == rutCliente && c.Estado == "Activo");
 
             if (carrito == null)
             {
@@ -47,17 +46,22 @@ namespace ApiPrincipal_Ferremas.Controllers
 
                 _context.Carritos.Add(nuevoCarrito);
                 await _context.SaveChangesAsync();
-                mensaje = "Se agregó el carrito del cliente";
-            }
 
-            mensaje = "Se usará el carrito existente y activo";
+                return Ok(new
+                {
+                    mensaje = "Se agregó el carrito del cliente",
+                    idCarrito = nuevoCarrito.IdCarrito
+                });
+            }
 
             return Ok(new
             {
-                mensaje = mensaje
+                mensaje = "Se usará el carrito existente y activo",
+                idCarrito = carrito.IdCarrito
             });
         }
 
+        // GET: api/carrito/carrito-activo
         [Authorize(Policy = "ClienteOnly")]
         [HttpGet("carrito-activo")]
         public IActionResult ObtenerCarritoActivo()
