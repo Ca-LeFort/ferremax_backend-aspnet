@@ -211,7 +211,7 @@ namespace ApiPrincipal_Ferremas.Controllers
 
         // PROCESO DE PAGO MEDIANTE TRANSFERENCIA
         // POST: api/pagos/transferencia
-        //[Authorize(Policy = "ClienteOnly")]
+        [Authorize(Policy = "ClienteOnly")]
         [HttpPost("transferencia")]
         public async Task<IActionResult> CrearPagoTransferencia([FromBody] Pedido request)
         {
@@ -219,11 +219,6 @@ namespace ApiPrincipal_Ferremas.Controllers
             {
                 var pago = await _context.Pagos
                     .FirstOrDefaultAsync(p => p.IdPedido == request.IdPedido);
-                
-                if (pago?.IdEstPago != 2)
-                {
-                    return BadRequest();
-                }
 
                 var pagoTransferencia = new Pago
                 {
