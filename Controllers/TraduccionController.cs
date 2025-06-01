@@ -42,5 +42,19 @@ public class TraduccionController : ControllerBase
         var estados = _context.EstadoCivils.ToList();
         return Ok(estados);
     }
+
+    [HttpGet("despachos")]
+    public IActionResult ObtenerDespachos()
+    {
+        var despachos = _context.Despachos.ToList();
+        return Ok(despachos);
+    }
+
+    [HttpGet("sucursales")]
+    public IActionResult ObtenerSucursales()
+    {
+        var sucursales = _context.Sucursals.ToList();
+        return Ok(sucursales);
+    }
     /* Tablas con Traducciones */
 }
