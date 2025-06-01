@@ -56,5 +56,12 @@ public class TraduccionController : ControllerBase
         var sucursales = _context.Sucursals.ToList();
         return Ok(sucursales);
     }
+
+    [HttpGet("medio-pagos")]
+    public IActionResult ObtenerMedioPagos()
+    {
+        var medio_pagos = _context.MedioPagos.ToList();
+        return Ok(medio_pagos);
+    }
     /* Tablas con Traducciones */
 }

@@ -26,7 +26,7 @@ namespace ApiPrincipal_Ferremas.Controllers
         /* PROCESO DE PAGO CON MERCADO PAGO */
 
         // POST: api/pagos/crear
-        //[Authorize(Policy = "ClienteOnly")]
+        [Authorize(Policy = "ClienteOnly")]
         [HttpPost("crear")]
         public async Task<IActionResult> CrearPagoMercadoPago([FromBody] PedidoDTO request)
         {
@@ -144,20 +144,7 @@ namespace ApiPrincipal_Ferremas.Controllers
             pago.Referencia = pagoResponse.payment_id;
             await _context.SaveChangesAsync();
 
-            return new JsonResult(new
-            {
-                CollectionId = pagoResponse.collection_id,
-                CollectionStatus = pagoResponse.collection_status,
-                PaymentId = pagoResponse.payment_id,
-                Status = pagoResponse.status,
-                ExternalReference = pagoResponse.external_reference,
-                PaymentType = pagoResponse.payment_type,
-                MerchantOrderId = pagoResponse.merchant_order_id,
-                PreferenceId = pagoResponse.preference_id,
-                SiteId = pagoResponse.site_id,
-                ProcessingMode = pagoResponse.processing_mode,
-                MerchantAccountId = pagoResponse.merchant_account_id
-            });
+            return Redirect($"https://localhost:4200/comprobante/aprobado?pedido={idPedido}&ref={pagoResponse.payment_id}");
         }
 
         [HttpGet("Failure")]
@@ -192,20 +179,7 @@ namespace ApiPrincipal_Ferremas.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            return new JsonResult(new
-            {
-                CollectionId = pagoResponse.collection_id,
-                CollectionStatus = pagoResponse.collection_status,
-                PaymentId = pagoResponse.payment_id,
-                Status = pagoResponse.status,
-                ExternalReference = pagoResponse.external_reference,
-                PaymentType = pagoResponse.payment_type,
-                MerchantOrderId = pagoResponse.merchant_order_id,
-                PreferenceId = pagoResponse.preference_id,
-                SiteId = pagoResponse.site_id,
-                ProcessingMode = pagoResponse.processing_mode,
-                MerchantAccountId = pagoResponse.merchant_account_id
-            });
+            return Redirect($"https://localhost:4200/comprobante/rechazado?pedido={idPedido}&status={pagoResponse.status}&ref={pagoResponse.payment_id}");
         }
 
         [HttpGet("Pending")]
@@ -230,20 +204,7 @@ namespace ApiPrincipal_Ferremas.Controllers
             pago.Referencia = pagoResponse.payment_id;
             await _context.SaveChangesAsync();
 
-            return new JsonResult(new
-            {
-                CollectionId = pagoResponse.collection_id,
-                CollectionStatus = pagoResponse.collection_status,
-                PaymentId = pagoResponse.payment_id,
-                Status = pagoResponse.status,
-                ExternalReference = pagoResponse.external_reference,
-                PaymentType = pagoResponse.payment_type,
-                MerchantOrderId = pagoResponse.merchant_order_id,
-                PreferenceId = pagoResponse.preference_id,
-                SiteId = pagoResponse.site_id,
-                ProcessingMode = pagoResponse.processing_mode,
-                MerchantAccountId = pagoResponse.merchant_account_id
-            });
+            return Redirect($"https://localhost:4200/comprobante/pendiente?pedido={idPedido}&ref={pagoResponse.payment_id}");
         }
 
         /* FIN PROCESO DE PAGO CON MERCADO PAGO */
