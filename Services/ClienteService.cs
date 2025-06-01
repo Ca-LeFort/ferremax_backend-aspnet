@@ -6,7 +6,7 @@ public class ClienteService : InterfaceService
     public ResultadoOperacionService CrearCliente(Cliente cliente)
     {
         // Validación de largos de Nombre y Apellido
-        if (cliente.PNombre.Length <= 3)
+        if (cliente.PNombre.Length < 3)
         {
             return new ResultadoOperacionService
             {
@@ -15,7 +15,7 @@ public class ClienteService : InterfaceService
             };
         }
 
-        if (cliente.PApellido.Length <= 3)
+        if (cliente.PApellido.Length < 3)
         {
             return new ResultadoOperacionService
             {
@@ -24,7 +24,7 @@ public class ClienteService : InterfaceService
             };
         }
 
-        if (cliente.SApellido.Length <= 3)
+        if (cliente.SApellido.Length < 3)
         {
             return new ResultadoOperacionService
             {
@@ -66,7 +66,7 @@ public class ClienteService : InterfaceService
         }
 
         // Validación de la dirección
-        if (cliente.Direccion.Length <= 5)
+        if (cliente.Direccion.Length < 5)
         {
             return new ResultadoOperacionService
             {
