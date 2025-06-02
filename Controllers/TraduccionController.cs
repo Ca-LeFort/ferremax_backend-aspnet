@@ -63,5 +63,19 @@ public class TraduccionController : ControllerBase
         var medio_pagos = _context.MedioPagos.ToList();
         return Ok(medio_pagos);
     }
+
+    [HttpGet("estado-pedidos")]
+    public IActionResult ObtenerEstadoPedidos()
+    {
+        var estado_pedidos = _context.EstadoPedidos.ToList();
+        return Ok(estado_pedidos);
+    }
+
+    [HttpGet("estado-pagos")]
+    public IActionResult ObtenerEstadoPagos()
+    {
+        var estado_pagos = _context.EstadoPagos.ToList();
+        return Ok(estado_pagos);
+    }
     /* Tablas con Traducciones */
 }
