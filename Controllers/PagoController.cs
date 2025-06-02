@@ -7,6 +7,8 @@ using MercadoPago.Resource.Preference;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 
 namespace ApiPrincipal_Ferremas.Controllers
 {
@@ -358,6 +360,55 @@ namespace ApiPrincipal_Ferremas.Controllers
                     mensaje = "Error interno, vuelve a intentar más tarde",
                     detalle = ex.Message
                 });
+            }
+        }
+
+        // GET: api/pagos/reportes
+        [HttpGet("reportes")]
+        public IActionResult GenerarReportePagos()
+        {
+            var pagos = _context.Pagos.ToList();
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                Document doc = new Document(PageSize.A4);
+                PdfWriter.GetInstance(doc, ms);
+                doc.Open();
+
+                // Título
+                Font tituloFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18);
+                Paragraph titulo = new Paragraph("Reporte de Pagos", tituloFont);
+                titulo.Alignment = Element.ALIGN_CENTER;
+                doc.Add(titulo);
+                doc.Add(new Paragraph("\nFecha: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm")));
+
+                // Tabla de pedidos
+                PdfPTable table = new PdfPTable(4); // 4 columnas: ID, Cliente, Fecha, Total
+                table.WidthPercentage = 100;
+                table.SetWidths(new float[] { 1f, 3f, 2f, 2f });
+
+                // Encabezados
+                string[] headers = { "ID", "RUT Cliente", "Fecha", "Monto" };
+                foreach (var header in headers)
+                {
+                    PdfPCell cell = new PdfPCell(new Phrase(header, FontFactory.GetFont(FontFactory.HELVETICA_BOLD)));
+                    cell.BackgroundColor = BaseColor.LIGHT_GRAY;
+                    cell.HorizontalAlignment = Element.ALIGN_CENTER;
+                    table.AddCell(cell);
+                }
+
+                // Datos de pagos
+                foreach (var pago in pagos)
+                {
+                    table.AddCell(pago.IdPago.ToString());
+                    table.AddCell(pago.IdPedido.ToString());
+                    table.AddCell(pago.FechaPago.ToString("dd/MM/yyyy"));
+                    table.AddCell(pago.Monto.ToString("C"));
+                }
+
+                doc.Add(table);
+                doc.Close();
+                return File(ms.ToArray(), "application/pdf", "Reporte_Pagos.pdf");
             }
         }
     }
