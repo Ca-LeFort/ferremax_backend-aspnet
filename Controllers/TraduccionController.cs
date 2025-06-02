@@ -77,5 +77,12 @@ public class TraduccionController : ControllerBase
         var estado_pagos = _context.EstadoPagos.ToList();
         return Ok(estado_pagos);
     }
+
+    [HttpGet("tipo-empleados")]
+    public IActionResult ObtenerTipoEmpleados()
+    {
+        var tipo_empleados = _context.TipoEmpleados.ToList();
+        return Ok(tipo_empleados);
+    }
     /* Tablas con Traducciones */
 }

@@ -1,9 +1,9 @@
 using ApiPrincipal_Ferremas.Models;
+using ApiPrincipal_Ferremas.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using MySqlConnector;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;

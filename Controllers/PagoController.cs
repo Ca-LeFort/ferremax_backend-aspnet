@@ -251,8 +251,8 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // GET: api/pagos/todos
-        [Authorize(Policy = "AdminOnly")]
-        [Authorize(Policy = "ContadorOnly")]
+        //[Authorize(Policy = "AdminOnly")]
+        //[Authorize(Policy = "ContadorOnly")]
         [HttpGet("todos")]
         public async Task<ActionResult<IEnumerable<Pago>>> ListarPagos()
         {
@@ -271,8 +271,8 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // GET: api/pagos/{idPago}
-        [Authorize(Policy = "AdminOnly")]
-        [Authorize(Policy = "ContadorOnly")]
+        //[Authorize(Policy = "AdminOnly")]
+        //[Authorize(Policy = "ContadorOnly")]
         [HttpGet("{idPago}")]
         public async Task<ActionResult> VerPago(int idPago)
         {
@@ -300,8 +300,8 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // PUT: api/pagos/{idPago}
-        [Authorize(Policy = "AdminOnly")]
-        [Authorize(Policy = "ContadorOnly")]
+        //[Authorize(Policy = "AdminOnly")]
+        //[Authorize(Policy = "ContadorOnly")]
         [HttpPut("{idPago}")]
         public async Task<IActionResult> ActualizarPago(int idPago, [FromBody] PagoDTO request)
         {
@@ -332,8 +332,8 @@ namespace ApiPrincipal_Ferremas.Controllers
         }
 
         // DELETE: api/pagos/{idPago}
-        [Authorize(Policy = "AdminOnly")]
-        [Authorize(Policy = "ContadorOnly")]
+        //[Authorize(Policy = "AdminOnly")]
+        //[Authorize(Policy = "ContadorOnly")]
         [HttpDelete("{idPago}")]
         public async Task<IActionResult> EliminarPago(int idPago)
         {
